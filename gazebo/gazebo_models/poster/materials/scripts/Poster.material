@@ -1,0 +1,14 @@
+material Poster/PosterTexture
+{
+  technique
+  {
+    pass
+    {
+      lighting off
+      texture_unit
+      {
+        texture PosterTexture.png
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="stolac1">
+    <static>true</static>
+    <link name="base_link">
+      
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://stolac1/meshes/crta_stolac1.STL</uri>
+            <scale>0.001 0.001 0.001</scale>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <collision name="collision">
+       <pose>0.645 0.35 0.375 0 0 0</pose>
+        <geometry>
+         <box>
+          <size>1.29 0.7 0.75</size> <!-- Prilagodi veličini stolca -->
+         </box>
+        </geometry>
+       </collision>
+
+    </link>
+  </model>
+</sdf>
+
