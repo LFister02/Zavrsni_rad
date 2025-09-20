@@ -31,8 +31,8 @@ def generate_launch_description():
 
                 Node(
                     package='a_star_test',
-                    executable='tello_follower',	
-                    name='tello_follower',
+                    executable='crta_follower',	
+                    name='crta_follower',
                     output = 'screen',
                 ),
             ]
