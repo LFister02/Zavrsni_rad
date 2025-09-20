@@ -50,11 +50,6 @@ class PathFollower(Node):
         if self.goal_reached:
             return
 
-        if self.obstacle_detected:
-            self.get_logger().warn("Dron je naišao na prepreku -> sigurnosno zaustavljanje!")
-            self.safe_stop()
-            return
-
         if not self.path or self.current_target_index >= len(self.path):
             self.send_stop()
             return
@@ -123,4 +118,3 @@ def main(args=None):
     node = PathFollower()
     rclpy.spin(node)
     rclpy.shutdown()
-
