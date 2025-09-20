@@ -92,27 +92,51 @@
     </spherical_coordinates>
     
      
-     <model name="moving_box">
-  <pose>1.75 10.5 0.5 0 0 0</pose>
-  <static>false</static>
+    <model name="moving_box">
+      <pose>1.75 10.5 0.5 0 0 0</pose>
+      <static>false</static>
 
-  <link name="link">
-    <collision name="collision">
-      <geometry>
-        <box><size>0.5 0.5 1.8</size></box>
-      </geometry>
-    </collision>
-    <visual name="visual">
-      <geometry>
-        <box><size>0.5 0.5 1.8</size></box>
-      </geometry>
-      <material>Gray</material>
-    </visual>
-  </link>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box><size>0.5 0.5 1.8</size></box>
+          </geometry>
+         </collision>
+         <visual name="visual">
+           <geometry>
+             <box><size>0.5 0.5 1.8</size></box>
+           </geometry>
+           <material>Gray</material>
+         </visual>
+      </link>
 
-  <!-- plugin -->
-  <plugin name="move_box_plugin" filename="libmoving_box_plugin.so"/>
-</model>
+      <!-- plugin -->
+      <plugin name="move_box_plugin" filename="libmoving_box_plugin.so"/>
+    </model>
+
+
+
+    <model name="moving_box2">
+      <pose>10 16 0.5 0 0 0</pose>
+      <static>false</static>
+
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box><size>0.5 0.5 1.8</size></box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box><size>0.5 0.5 1.8</size></box>
+          </geometry>
+          <material>Gray</material>
+        </visual>
+      </link>
+
+      <!-- plugin -->
+      <plugin name="move_box_plugin" filename="libmoving_box2_plugin.so"/>
+    </model>
      
      
       
