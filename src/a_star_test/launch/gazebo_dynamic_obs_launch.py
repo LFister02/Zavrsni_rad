@@ -23,8 +23,8 @@ def generate_launch_description():
 
                 Node(
                     package='a_star_test',
-                    executable='gazebo_a_star',	
-                    name='gazebo_a_star',
+                    executable='gazebo_dyn_obs',	
+                    name='dyn_obs_replanning',
                     output = 'screen',
                                                   
                 ),
