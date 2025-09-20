@@ -27,7 +27,7 @@ def generate_launch_description():
                     name='a_star_nr_test',
                     output = 'screen',
                     parameters = [
-                        {"file_name" : "ime_CSV_datoteke"},   # Ime datoteke u kojoj se spremaju podaci testiranja
+                        {"file_name" : "ime_datoteke"},   # Ime datoteke u kojoj se spremaju podaci testiranja
                         {"grid_size_x" : 100},   # Definiranje dimenzija 3D kvadratne mreže
                         {"grid_size_y" : 100},
                         {"grid_size_z" : 6},
@@ -35,13 +35,13 @@ def generate_launch_description():
                         {"max_obstacle_height" : 6},    # Definiranje maksimalne visine prepreka
                         {"wanted_iterations" : 500},     # Definiranje broja iteracija
                         {"heuristic_type" : "euclidean"},   # Definiranje tipa heuristike - Mogući odabir: [manhattan | euclidean]
-                        {"kretanje": "dijagonalno"},    # Definiranje načona kretanja - Moguči odabir: [jednostavno | dijagonalno], gdje je jednostavno = 6 smjerova, a dijagonalno = 26 smjerova
+                        {"kretanje": "dijagonalno"},    # Definiranje načina kretanja - Moguči odabir: [jednostavno | dijagonalno], gdje je jednostavno = 6 smjerova, a dijagonalno = 26 smjerova
                         {"heuristic_gore" : 1.0},   # Definiranje kazne
                         {"heuristic_isto" : 1.0},
                         {"heuristic_dolje" : 1.0},
                         {"save_results_csv" : False},   # Postavljanje snimanja podataka [True | False]
-                        {"work_type" : "point_click"}    # Postavljanje načina rada algoritma s obzirom na pozicije starta i cilja
-                                                        # Načini rada: [non_random | random | point_click | penalty]
+                        {"work_type" : "random_height"}    # Postavljanje načina rada algoritma s obzirom na pozicije starta i cilja
+                                                        # Načini rada: [non_random | random | point_click | random_height]
                     ]
                 ),
             ]
