@@ -15,7 +15,7 @@ class AStarGazebo(Node):
         super().__init__('gazebo_a_star')  
         self.marker_pub = self.create_publisher(Marker, 'visualization_marker', 10)
         self.path_pub = self.create_publisher(Path, '/astar_path', 10)
-        self.goal_sub = self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
+        self.goal_subscriber = self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
 
         self.occupied_voxels = set()
         self.buffer_zones = set()
@@ -32,15 +32,15 @@ class AStarGazebo(Node):
         self.goal = None
         self.start_received = False
         self.start = None
-        self.max_z = int(7.0 * self.resolution // self.resolution)  #   Ograničenje visine leta
-        self.z_offset = 1   #   Korekcija visine markera
+        self.max_z = int(7.0 * self.resolution // self.resolution) # Ograničenje visine
+        self.z_offset = 1 # Korekcija visine markera
 
         self.sum_duration = 0
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.load_voxels('putanja_do_CSV_datoteke') #   Potrebno postaviti!
+        self.load_voxels('putanja_do_CSV_datoteke') # Potrebno postaviti
         self.publish_obstacles()
         self.obstacle_buffer_zone()
         
@@ -54,15 +54,15 @@ class AStarGazebo(Node):
                     y = int(float(row['y']) / self.resolution)
                     z = int((float(row['z']) / self.resolution) + self.z_offset)
                     self.occupied_voxels.add((x, y, z))
-            self.get_logger().info(f"Markeri su objavljeni!")
-
+            self.get_logger().info(f"Učitano {len(self.occupied_voxels)} voxela iz {filename}.")
+        
         except FileNotFoundError:
             self.get_logger().error(f"Datoteka {filename} nije pronađena!")
             
         except Exception as e:
             self.get_logger().error(f"Greška prilikom učitavanja CSV-a: {e}")
 
-
+    
     def publish_obstacles(self):
         marker = Marker()
         marker.header.frame_id = "map"
@@ -106,7 +106,7 @@ class AStarGazebo(Node):
         marker.type = Marker.SPHERE
         marker.action = Marker.ADD
         marker.scale.x = marker.scale.y = marker.scale.z = self.resolution
-        marker.color.r, marker.color.g, marker.color.b, marker.color.a = 1.0
+        marker.color.r, marker.color.g, marker.color.b, marker.color.a = *color, 1.0
         marker.pose.position.x = x * self.resolution + self.resolution / 2
         marker.pose.position.y = y * self.resolution + self.resolution / 2
         marker.pose.position.z = z * self.resolution + self.resolution / 2
@@ -156,7 +156,7 @@ class AStarGazebo(Node):
 
         distance = math.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
 
-        # Visinska kazna
+        # Kazna za penjanje
         if dz > 0:
             height_penalty = self.heuristic_gore
         elif dz < 0:
@@ -293,6 +293,8 @@ class AStarGazebo(Node):
             else:
                 self.get_logger().warn(f"Putanja nije pronađena!")
 
+        
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -300,3 +302,7 @@ def main(args=None):
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
