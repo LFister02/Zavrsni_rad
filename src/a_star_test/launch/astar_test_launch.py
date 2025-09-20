@@ -13,7 +13,7 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             output='log',
-            arguments=['-d', '/home/lucijan/zavrsni_ws/src/a_star_test/config/zavrsni.rviz'],
+            arguments=['-d', 'putanja_do_rviz_config_datoteke'],
             
         ),
 
