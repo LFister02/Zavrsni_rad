@@ -84,9 +84,9 @@ class AStarTest(Node):
 
         # Nacin rada
         self.declare_parameter("work_type", "non_random")
-        self.work_type = self.get_parameter("work_type").get_parameter_value().string_value     # work_types = [non_ranodm | random | point_click | penalty]
+        self.work_type = self.get_parameter("work_type").get_parameter_value().string_value     # work_types = [non_ranodm | random | point_click | random_height]
 
-        if self.work_type == "non_random" or self.work_type == "random" or self.work_type.lower() == "penalty":
+        if self.work_type == "non_random" or self.work_type == "random" or self.work_type.lower() == "random_height":
             self.timer_period = 1.0
             self.timer = self.create_timer(self.timer_period, self.run_astar_cycle)
 
@@ -105,7 +105,7 @@ class AStarTest(Node):
             self.obstacle_buffer_zone()
 
         else:
-            self.get_logger().warn("Nije zadan način rada! Pokušajte ponovno: [non_ranodm | random | point_click]")
+            self.get_logger().warn("Nije zadan način rada! Pokušajte ponovno: [non_ranodm | random | point_click | random_height]")
 
 
     #   Generiraj prepreke 
@@ -140,7 +140,7 @@ class AStarTest(Node):
                     if z < self.grid_size[2]:
                         self.occupied_voxels.add((x, y, z))
 
-        elif self.work_type.lower() == "penalty":
+        elif self.work_type.lower() == "random_height":
             counter = 0
             while counter < self.num_obstacles:
                 x = random.randint(0, self.grid_size[0] - 1)
@@ -407,7 +407,7 @@ class AStarTest(Node):
             self.occupied_voxels = set()
             self.buffer_zones = set()
 
-            if self.work_type.lower() == "non_random" or self.work_type.lower() == "penalty":
+            if self.work_type.lower() == "non_random" or self.work_type.lower() == "random_height":
                 self.start = (self.start_x_pos, self.start_y_pos, self.start_z_pos)
                 self.goal = (self.goal_x_pos, self.goal_y_pos, self.goal_z_pos)
                 self.generate_obstacles()
