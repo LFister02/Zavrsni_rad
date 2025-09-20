@@ -7,6 +7,7 @@ from tf2_ros import Buffer, TransformListener, LookupException, ConnectivityExce
 import math 
 from sensor_msgs.msg import Range
 from tf2_geometry_msgs import do_transform_point
+import time
 
 
 
@@ -18,7 +19,9 @@ class PathFollowerDynamic(Node):
         self.cmd_pub_drone = self.create_publisher(Twist, '/drone1/cmd_vel', 10)
         self.stop_tracker_sub = self.create_subscription(Bool, '/drone1/stop_tracker', self.stop_tracker_callback, 10)
         self.range_sensor_sub = self.create_subscription(Range, '/range_sensor', self.sensor_callback,10)
+        self.new_obs_pub = self.create_publisher(PointStamped, '/new_obstacle', 10)
 
+        self.replan = False
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -28,12 +31,15 @@ class PathFollowerDynamic(Node):
         self.goal_reached = False   
 
         self.Kp = 0.4      
-        self.max_vel = 0.2     
+        self.max_vel = 0.1     
         self.timer = self.create_timer(0.1, self.timer_callback) 
 
         self.obstacle_detected = False
         self.range = None
-        self.safe_range = 0.7
+        self.safe_range = 1.0
+
+        self.resolution = 0.05
+
 
 
     def path_callback(self, msg):
@@ -41,6 +47,7 @@ class PathFollowerDynamic(Node):
         self.current_target_index = 0  
         self.goal_reached = False 
         self.get_logger().info(f"Primljena je nova putanja sa: ({len(self.path)} točaka).")
+
 
 
     def get_drone_position(self):
@@ -57,13 +64,15 @@ class PathFollowerDynamic(Node):
     def timer_callback(self):
         if self.goal_reached:
             return
-
-        if self.obstacle_detected:
-            self.get_logger().warn("Dron je naišao na prepreku -> sigurnosno zaustavljanje!")
+        
+        elif self.obstacle_detected:
             self.safe_stop()
-            return
+            time.sleep(3.0)
+            self.obstacle_detected = True
+            self.replan = True
 
-        if not self.path or self.current_target_index >= len(self.path):
+
+        elif not self.path or self.current_target_index >= len(self.path):
             self.send_stop()
             return
 
@@ -71,12 +80,10 @@ class PathFollowerDynamic(Node):
         if drone_pos is None:
             return
 
-        # Uzmi sljedeću točku na putanji
         target_point = PointStamped()
         target_point.header.frame_id = "map"
         target_point.point = self.path[self.current_target_index]
 
-        # Transformiraj točku u dronov frame
         try:
             transformation = self.tf_buffer.lookup_transform('base_link_1', target_point.header.frame_id, rclpy.time.Time())
             target_transformed = do_transform_point(target_point, transformation)
@@ -87,10 +94,9 @@ class PathFollowerDynamic(Node):
             self.get_logger().warn("Transformacija točke nije dostupna")
             return
 
-        # Izračun udaljenosti
         dist = math.sqrt(dx**2 + dy**2 + dz**2)
 
-        threshold = 0.1
+        threshold = 0.075
         if dist < threshold:
             self.get_logger().info(f"Točka {self.current_target_index} dosegnuta.")
             self.current_target_index += 1
@@ -98,10 +104,8 @@ class PathFollowerDynamic(Node):
                 self.send_stop()
             return
 
-        # P-regulator
         vel = min(self.Kp * dist, self.max_vel)
 
-        # Objavi brzinu
         vel_msg = Twist()
         vel_msg.linear.x = vel * dx / dist
         vel_msg.linear.y = vel * dy / dist
@@ -109,15 +113,12 @@ class PathFollowerDynamic(Node):
 
         self.cmd_pub_drone.publish(vel_msg)
 
-    #   Zaustavi kretanje drona
     def send_stop(self):
         stop_msg = Twist()
         self.cmd_pub_drone.publish(stop_msg)
         self.goal_reached = True
-        self.get_logger().info("Putanja završena. Dron zaustavljen!")
+        self.get_logger().info("Misija završena. Dron zaustavljen!")
 
-    #   Sigurnosno zaustavljanje drona
-    #   Ako se primi poruka o pritisnutoj tipki X na kontroleru izvršava se metoda
     def stop_tracker_callback(self, msg):
         if msg.data:
             self.goal_reached = True 
@@ -129,19 +130,48 @@ class PathFollowerDynamic(Node):
         stop_msg = Twist()
         self.cmd_pub_drone.publish(stop_msg)
 
-    #   Prihvat podataka sa sanzora blizine 
-    #   Ako sonzor detektira prepreku na udaljenosti manjoj od safe_range - signal za zaustavljanje
+    #   Slusanje informacija sa senzora
     def sensor_callback(self, msg):
         self.range = msg.range
-        if self.range <= self.safe_range:
-            if not self.obstacle_detected:
-                self.get_logger().warn("Prepreka detektirana - Sigurnosno zaustavljanje!")
+        if self.range <= self.safe_range and not self.obstacle_detected and not self.replan:
+            self.get_logger().warn("Prepreka detektirana - Sigurnosno zaustavljanje!")
             self.obstacle_detected = True
 
-        else:
-            if self.obstacle_detected:
-                self.get_logger().info("Prepreka se pomaknula - Nastavak misije!")
+        elif self.range <= self.safe_range and self.replan:
+            obs_pos = PointStamped()
+            obs_pos.header.frame_id = "base_link_1"
+            obs_pos.header.stamp = self.get_clock().now().to_msg()
+            obs_pos.point.x = self.range * 0.15 # Korekcija mjerila Gazebo - Rviz
+            obs_pos.point.y = 0.0
+            obs_pos.point.z = 0.0
+
+            try:
+                transformation = self.tf_buffer.lookup_transform('map', obs_pos.header.frame_id, rclpy.time.Time())
+                target_transformed = do_transform_point(obs_pos, transformation)
+                dx = target_transformed.point.x
+                dy = target_transformed.point.y
+                dz = target_transformed.point.z
+            except (LookupException, ConnectivityException, ExtrapolationException):
+                    self.get_logger().warn("Transformacija točke nije dostupna")
+                    return
+
+            pos_msg = PointStamped()
+            pos_msg.header.frame_id = "map"
+            obs_pos.header.stamp = self.get_clock().now().to_msg()
+            pos_msg.point.x = dx
+            pos_msg.point.y = dy
+            pos_msg.point.z = dz
+            self.new_obs_pub.publish(pos_msg)
             self.obstacle_detected = False
+
+
+
+        elif self.range > self.safe_range:
+            self.replan = False
+            self.obstacle_detected = False
+
+        else:
+            pass
 
 
 def main(args=None):
